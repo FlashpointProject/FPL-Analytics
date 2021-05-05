@@ -1,0 +1,61 @@
+{
+  "name": "analytics",
+  "displayName": "Flashpoint Analytics",
+  "author": "Colin Berry",
+  "version": "1.0.0",
+  "launcherVersion": "10.0.0",
+  "description": "Opt-in collection of information on Flashpoint usage.",
+  "icon": "icon.png",
+  "main": "./dist/ext.js",
+  "contributes": {
+    "configuration": [
+      {
+        "title": "Flashpoint Analytics",
+        "properties": {
+          "com.analytics.basic": {
+            "title": "Essential (Restart Required)",
+            "type": "boolean",
+            "default": false,
+            "description": "Enables collection of basic data. (Launcher Version / Startup Events)"
+          },
+          "com.analytics.games": {
+            "title": "Games",
+            "type": "boolean",
+            "default": false,
+            "description": "Enables collection of Game launch statistics. (Game Launches)"
+          },
+          "com.analytics.delete-button": {
+            "title": "Submit Deletion Request",
+            "description": "Opens the deletion form in browser, disables all analytics and randomizes a new User ID.",
+            "type": "button",
+            "command": "com.analytics.deletion-request"
+          }
+        }
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "14.10.1",
+    "@types/universal-analytics": "^0.4.4",
+    "@types/uuid": "^8.3.0",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-zip": "^5.1.0",
+    "merge-stream": "^2.0.0",
+    "ts-loader": "8.0.3",
+    "typescript": "4.0.2",
+    "webpack": "4.44.1",
+    "webpack-cli": "3.3.12"
+  },
+  "scripts": {
+    "package": "gulp",
+    "build": "webpack --mode development",
+    "watch": "webpack --mode development --watch"
+  },
+  "dependencies": {
+    "open": "^8.0.7",
+    "ts-debounce": "^2.0.1",
+    "universal-analytics": "^0.4.23",
+    "uuid": "^8.3.2"
+  }
+}

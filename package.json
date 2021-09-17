@@ -24,6 +24,18 @@
             "default": false,
             "description": "Enables collection of Game launch statistics. (Game Launches)"
           },
+          "com.analytics.php-reporting": {
+            "title": "PHP Reporting",
+            "description": "Helps with repacking Legacy Games into zips. Listens for Games trying to load files from the PHP server and reports the ID and URL pair.",
+            "type": "boolean",
+            "default": false
+          },
+          "com.analytics.hardware": {
+            "title": "Simplified Hardware Info",
+            "description": "Sends back simplified hardware info, includes Operating System version and Total System Memory",
+            "type": "boolean",
+            "default": false
+          },
           "com.analytics.delete-button": {
             "title": "Submit Deletion Request",
             "description": "Opens the deletion form in browser, disables all analytics and randomizes a new User ID.",

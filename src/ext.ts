@@ -25,6 +25,7 @@ export async function activate(context: flashpoint.ExtensionContext) {
           'How long you use Flashpoint for',
           'The version of Flashpoint you are running',
           'What games you launch',
+          'Simplified Hardware Info (Architecture, Operating System, Available Memory)',
           'Which URLs games request, to help with repacking legacy games',
         ];
         const res = await flashpoint.dialogs.showMessageBox({

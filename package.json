@@ -2,7 +2,7 @@
   "name": "analytics",
   "displayName": "Flashpoint Analytics",
   "author": "Colin Berry",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "launcherVersion": "10.0.0",
   "description": "Opt-in collection of information on Flashpoint usage.",
   "icon": "icon.png",
@@ -47,8 +47,8 @@
     ]
   },
   "devDependencies": {
+    "@types/flashpoint-launcher": "^10.1.0",
     "@types/node": "14.10.1",
-    "@types/universal-analytics": "^0.4.4",
     "@types/uuid": "^8.3.0",
     "gulp": "^4.0.2",
     "gulp-cli": "^2.3.0",
@@ -65,9 +65,13 @@
     "watch": "webpack --mode development --watch"
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "open": "^8.0.7",
     "ts-debounce": "^2.0.1",
-    "universal-analytics": "^0.4.23",
     "uuid": "^8.3.2"
+  },
+  "config": {
+    "host": "https://analytics.unstable.life/",
+    "generalToken": "0xc0ffee"
   }
 }

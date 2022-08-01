@@ -21,9 +21,10 @@ export async function activate(context: flashpoint.ExtensionContext) {
   }
 
   const firstLaunch = !flashpoint.getExtConfigValue('com.analytics.setup-complete');
-  const firstConnect = true;
+  let firstConnect = true;
   flashpoint.onDidConnect(async () => {
     if (firstConnect) {
+      firstConnect = false;
       // First Launch Prompts
       if (firstLaunch) {
         const trackingInfoHuman = [
@@ -126,21 +127,20 @@ export async function activate(context: flashpoint.ExtensionContext) {
             }
           }
         });
-      }
 
-      // Wipe User Data
-      registerSub(flashpoint.commands.registerCommand('com.analytics.deletion-request', async () => {
-        await flashpoint.setExtConfigValue('com.analytics.basic', false);
-        await flashpoint.setExtConfigValue('com.analytics.games', false);
-        await flashpoint.setExtConfigValue('com.analytics.hardware', false);
-        await flashpoint.setExtConfigValue('com.analytics.php-reporting', false);
-        let userId = flashpoint.getExtConfigValue('com.analytics.user-id');
-        const deletionFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLScPeAKFmieGuHdu3FcyiSXqDdfcEFAfjIpM7nzlUsJbi9NYuw/viewform?entry.818267307=${userId}`;
-        userId = uuid();
-        await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
-        open(deletionFormUrl);
-      }));
-            
+        // Wipe User Data
+        registerSub(flashpoint.commands.registerCommand('com.analytics.deletion-request', async () => {
+          await flashpoint.setExtConfigValue('com.analytics.basic', false);
+          await flashpoint.setExtConfigValue('com.analytics.games', false);
+          await flashpoint.setExtConfigValue('com.analytics.hardware', false);
+          await flashpoint.setExtConfigValue('com.analytics.php-reporting', false);
+          let userId = flashpoint.getExtConfigValue('com.analytics.user-id');
+          const deletionFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLScPeAKFmieGuHdu3FcyiSXqDdfcEFAfjIpM7nzlUsJbi9NYuw/viewform?entry.818267307=${userId}`;
+          userId = uuid();
+          await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
+          open(deletionFormUrl);
+        }));
+      }     
     }
   });
 }

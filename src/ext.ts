@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import axios from 'axios';
 import { URL } from 'url';
+import arch from 'arch';
 
 let session: Session | undefined;
 
@@ -79,7 +80,7 @@ export async function activate(context: flashpoint.ExtensionContext) {
           else if (totalmem > 2147400000)  { simplifiedTotalMem = '>= 2GB < 4GB';  }
           else if (totalmem > 10000)       { simplifiedTotalMem = '< 2GB';         }
           Promise.all([
-            session.event('Hardware', 'arch', os.arch()),
+            session.event('Hardware', 'arch', arch()),
             session.event('Hardware', 'operatingSystem', os.version()),
             session.event('Hardware', 'memory', simplifiedTotalMem)
           ])

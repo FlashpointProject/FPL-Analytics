@@ -63,84 +63,88 @@ export async function activate(context: flashpoint.ExtensionContext) {
         }
         
         // Create Session
-        session = new Session(userId);
-        await session.connect();
-        session.event('Basic', 'launch', '');
-        if (flashpoint.dataVersion) {
-          session.event('Basic', 'version', flashpoint.dataVersion);
-        }
+        try {
+          session = new Session(userId);
+          await session.connect();
+          session.event('Basic', 'launch', '');
+          if (flashpoint.dataVersion) {
+            session.event('Basic', 'version', flashpoint.dataVersion);
+          }
 
-        // Hardware
-        if (config.hardware() && !config.hardwareSent()) {
-          let totalmem = os.totalmem();
-          let simplifiedTotalMem = "unknown";
-          if      (totalmem > 17179000000) { simplifiedTotalMem = '>= 16GB';       }
-          else if (totalmem > 8589900000)  { simplifiedTotalMem = '>= 8GB < 16GB'; }
-          else if (totalmem > 4294900000)  { simplifiedTotalMem = '>= 4GB < 8GB';  }
-          else if (totalmem > 2147400000)  { simplifiedTotalMem = '>= 2GB < 4GB';  }
-          else if (totalmem > 10000)       { simplifiedTotalMem = '< 2GB';         }
-          Promise.all([
-            session.event('Hardware', 'arch', arch()),
-            session.event('Hardware', 'operatingSystem', os.version()),
-            session.event('Hardware', 'memory', simplifiedTotalMem)
-          ])
-          .then(() => {
-            flashpoint.setExtConfigValue('com.analytics.hardware-sent', true);
-          })
-          .catch((err) => {
-            flashpoint.log.error('Error sending Hardware stats, will send on next startup.');
-          })
-        }
-
-        // Game Launch
-        registerSub(flashpoint.games.onDidLaunchGame((game) => {
-          if (config.games()) {
-            session.event('Games', 'gameLaunch', game.id);
-            const timeStart = Date.now();
-            const listener = flashpoint.services.onServiceRemove((process) => {
-              if (process.id === 'game.' + game.id) {
-                session.event('GameTime', 'gameId', ((Date.now() - timeStart) / 1000).toString());
-                flashpoint.dispose(listener);
-              }
+          // Hardware
+          if (config.hardware() && !config.hardwareSent()) {
+            let totalmem = os.totalmem();
+            let simplifiedTotalMem = "unknown";
+            if      (totalmem > 17179000000) { simplifiedTotalMem = '>= 16GB';       }
+            else if (totalmem > 8589900000)  { simplifiedTotalMem = '>= 8GB < 16GB'; }
+            else if (totalmem > 4294900000)  { simplifiedTotalMem = '>= 4GB < 8GB';  }
+            else if (totalmem > 2147400000)  { simplifiedTotalMem = '>= 2GB < 4GB';  }
+            else if (totalmem > 10000)       { simplifiedTotalMem = '< 2GB';         }
+            Promise.all([
+              session.event('Hardware', 'arch', arch()),
+              session.event('Hardware', 'operatingSystem', os.version()),
+              session.event('Hardware', 'memory', simplifiedTotalMem)
+            ])
+            .then(() => {
+              flashpoint.setExtConfigValue('com.analytics.hardware-sent', true);
+            })
+            .catch((err) => {
+              flashpoint.log.error('Error sending Hardware stats, will send on next startup.');
             })
           }
-        }));
 
-        flashpoint.log.onLog((entry) => {
-          if (entry.source === 'Server') {
-            let urlSubstring = "";
-            const baseIdx = entry.content.indexOf('Serving File From Base URLs:');
-            if (baseIdx !== -1) {
-              urlSubstring = entry.content.substring(baseIdx + 'Serving File From Base URLs:'.length + 2);
-            } else {
-              const htdocsIdx = entry.content.indexOf('Serving File From HTDOCS:');
-              if (htdocsIdx !== -1) {
-                urlSubstring = entry.content.substring(htdocsIdx + 'Serving File From HTDOCS:'.length + 8);
+          // Game Launch
+          registerSub(flashpoint.games.onDidLaunchGame((game) => {
+            if (config.games()) {
+              session.event('Games', 'gameLaunch', game.id);
+              const timeStart = Date.now();
+              const listener = flashpoint.services.onServiceRemove((process) => {
+                if (process.id === 'game.' + game.id) {
+                  session.event('GameTime', 'gameId', ((Date.now() - timeStart) / 1000).toString());
+                  flashpoint.dispose(listener);
+                }
+              })
+            }
+          }));
+
+          flashpoint.log.onLog((entry) => {
+            if (entry.source === 'Server') {
+              let urlSubstring = "";
+              const baseIdx = entry.content.indexOf('Serving File From Base URLs:');
+              if (baseIdx !== -1) {
+                urlSubstring = entry.content.substring(baseIdx + 'Serving File From Base URLs:'.length + 2);
+              } else {
+                const htdocsIdx = entry.content.indexOf('Serving File From HTDOCS:');
+                if (htdocsIdx !== -1) {
+                  urlSubstring = entry.content.substring(htdocsIdx + 'Serving File From HTDOCS:'.length + 8);
+                }
+              }
+              if (urlSubstring && config.phpReporting()) {
+                // Check if a singular game is running
+                const games = flashpoint.services.getServices().filter(s => s.id.startsWith('game.'));
+                if (games.length === 1) {
+                  const gameId = games[0].id.substring(5);
+                  session.event('Repack', gameId, urlSubstring);
+                }
               }
             }
-            if (urlSubstring && config.phpReporting()) {
-              // Check if a singular game is running
-              const games = flashpoint.services.getServices().filter(s => s.id.startsWith('game.'));
-              if (games.length === 1) {
-                const gameId = games[0].id.substring(5);
-                session.event('Repack', gameId, urlSubstring);
-              }
-            }
-          }
-        });
+          });
 
-        // Wipe User Data
-        registerSub(flashpoint.commands.registerCommand('com.analytics.deletion-request', async () => {
-          await flashpoint.setExtConfigValue('com.analytics.basic', false);
-          await flashpoint.setExtConfigValue('com.analytics.games', false);
-          await flashpoint.setExtConfigValue('com.analytics.hardware', false);
-          await flashpoint.setExtConfigValue('com.analytics.php-reporting', false);
-          let userId = flashpoint.getExtConfigValue('com.analytics.user-id');
-          const deletionFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLScPeAKFmieGuHdu3FcyiSXqDdfcEFAfjIpM7nzlUsJbi9NYuw/viewform?entry.818267307=${userId}`;
-          userId = uuid();
-          await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
-          open(deletionFormUrl);
-        }));
+          // Wipe User Data
+          registerSub(flashpoint.commands.registerCommand('com.analytics.deletion-request', async () => {
+            await flashpoint.setExtConfigValue('com.analytics.basic', false);
+            await flashpoint.setExtConfigValue('com.analytics.games', false);
+            await flashpoint.setExtConfigValue('com.analytics.hardware', false);
+            await flashpoint.setExtConfigValue('com.analytics.php-reporting', false);
+            let userId = flashpoint.getExtConfigValue('com.analytics.user-id');
+            const deletionFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLScPeAKFmieGuHdu3FcyiSXqDdfcEFAfjIpM7nzlUsJbi9NYuw/viewform?entry.818267307=${userId}`;
+            userId = uuid();
+            await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
+            open(deletionFormUrl);
+          }));
+        } catch (error) {
+          flashpoint.log.error('Error connecting to Analytics server.');
+        }
       }     
     }
   });

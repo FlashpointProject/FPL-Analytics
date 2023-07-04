@@ -21,6 +21,10 @@ export async function activate(context: flashpoint.ExtensionContext) {
     hardwareSent: () => flashpoint.getExtConfigValue('com.analytics.hardware-sent'),
   }
 
+  const sessionError = (err: Error) => {
+    flashpoint.log.error(`Session Event Error: ${err}`);
+  }
+
   const firstLaunch = !flashpoint.getExtConfigValue('com.analytics.setup-complete');
   let firstConnect = true;
   flashpoint.onDidConnect(async () => {
@@ -66,9 +70,9 @@ export async function activate(context: flashpoint.ExtensionContext) {
         try {
           session = new Session(userId);
           await session.connect();
-          session.event('Basic', 'launch', '');
+          session.event('Basic', 'launch', '').catch(sessionError);
           if (flashpoint.dataVersion) {
-            session.event('Basic', 'version', flashpoint.dataVersion);
+            session.event('Basic', 'version', flashpoint.dataVersion).catch(sessionError);
           }
 
           // Hardware
@@ -81,9 +85,9 @@ export async function activate(context: flashpoint.ExtensionContext) {
             else if (totalmem > 2147400000)  { simplifiedTotalMem = '>= 2GB < 4GB';  }
             else if (totalmem > 10000)       { simplifiedTotalMem = '< 2GB';         }
             Promise.all([
-              session.event('Hardware', 'arch', arch()),
-              session.event('Hardware', 'operatingSystem', os.version()),
-              session.event('Hardware', 'memory', simplifiedTotalMem)
+              session.event('Hardware', 'arch', arch()).catch(sessionError),
+              session.event('Hardware', 'operatingSystem', os.version()).catch(sessionError),
+              session.event('Hardware', 'memory', simplifiedTotalMem).catch(sessionError)
             ])
             .then(() => {
               flashpoint.setExtConfigValue('com.analytics.hardware-sent', true);
@@ -96,11 +100,11 @@ export async function activate(context: flashpoint.ExtensionContext) {
           // Game Launch
           registerSub(flashpoint.games.onDidLaunchGame((game) => {
             if (config.games()) {
-              session.event('Games', 'gameLaunch', game.id);
+              session.event('Games', 'gameLaunch', game.id).catch(sessionError);
               const timeStart = Date.now();
               const listener = flashpoint.services.onServiceRemove((process) => {
                 if (process.id === 'game.' + game.id) {
-                  session.event('GameTime', 'gameId', ((Date.now() - timeStart) / 1000).toString());
+                  session.event('GameTime', 'gameId', ((Date.now() - timeStart) / 1000).toString()).catch(sessionError);
                   flashpoint.dispose(listener);
                 }
               })
@@ -124,7 +128,7 @@ export async function activate(context: flashpoint.ExtensionContext) {
                 const games = flashpoint.services.getServices().filter(s => s.id.startsWith('game.'));
                 if (games.length === 1) {
                   const gameId = games[0].id.substring(5);
-                  session.event('Repack', gameId, urlSubstring);
+                  session.event('Repack', gameId, urlSubstring).catch(sessionError);
                 }
               }
             }

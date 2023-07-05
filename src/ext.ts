@@ -1,3 +1,9 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as flashpoint from 'flashpoint-launcher';
 import { v4 as uuid } from 'uuid';
 import open from 'open';
@@ -10,7 +16,7 @@ import arch from 'arch';
 
 let session: Session | undefined;
 
-export async function activate(context: flashpoint.ExtensionContext) {
+export function activate(context: flashpoint.ExtensionContext) {
   const registerSub = (d: flashpoint.Disposable) => { flashpoint.registerDisposable(context.subscriptions, d)};
 
   const config = {
@@ -21,8 +27,8 @@ export async function activate(context: flashpoint.ExtensionContext) {
     hardwareSent: () => flashpoint.getExtConfigValue('com.analytics.hardware-sent'),
   }
 
-  const sessionError = (err: Error) => {
-    flashpoint.log.error(`Session Event Error: ${err}`);
+  const sessionError = (err: any) => {
+    flashpoint.log.error(`Session Event Error: ${err.toString()}`);
   }
 
   const firstLaunch = !flashpoint.getExtConfigValue('com.analytics.setup-complete');
@@ -63,7 +69,7 @@ export async function activate(context: flashpoint.ExtensionContext) {
         let userId: string | undefined = flashpoint.getExtConfigValue('com.analytics.user-id');
         if (!userId) {
           userId = uuid();
-          flashpoint.setExtConfigValue('com.analytics.user-id', userId);
+          await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
         }
         
         // Create Session
@@ -77,7 +83,7 @@ export async function activate(context: flashpoint.ExtensionContext) {
 
           // Hardware
           if (config.hardware() && !config.hardwareSent()) {
-            let totalmem = os.totalmem();
+            const totalmem = os.totalmem();
             let simplifiedTotalMem = "unknown";
             if      (totalmem > 17179000000) { simplifiedTotalMem = '>= 16GB';       }
             else if (totalmem > 8589900000)  { simplifiedTotalMem = '>= 8GB < 16GB'; }
@@ -89,10 +95,10 @@ export async function activate(context: flashpoint.ExtensionContext) {
               session.event('Hardware', 'operatingSystem', os.version()).catch(sessionError),
               session.event('Hardware', 'memory', simplifiedTotalMem).catch(sessionError)
             ])
-            .then(() => {
-              flashpoint.setExtConfigValue('com.analytics.hardware-sent', true);
+            .then(async () => {
+              await flashpoint.setExtConfigValue('com.analytics.hardware-sent', true);
             })
-            .catch((err) => {
+            .catch(() => {
               flashpoint.log.error('Error sending Hardware stats, will send on next startup.');
             })
           }
@@ -140,11 +146,11 @@ export async function activate(context: flashpoint.ExtensionContext) {
             await flashpoint.setExtConfigValue('com.analytics.games', false);
             await flashpoint.setExtConfigValue('com.analytics.hardware', false);
             await flashpoint.setExtConfigValue('com.analytics.php-reporting', false);
-            let userId = flashpoint.getExtConfigValue('com.analytics.user-id');
+            let userId = flashpoint.getExtConfigValue('com.analytics.user-id') as string;
             const deletionFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLScPeAKFmieGuHdu3FcyiSXqDdfcEFAfjIpM7nzlUsJbi9NYuw/viewform?entry.818267307=${userId}`;
             userId = uuid();
             await flashpoint.setExtConfigValue('com.analytics.user-id', userId);
-            open(deletionFormUrl);
+            await open(deletionFormUrl);
           }));
         } catch (error) {
           flashpoint.log.error('Error connecting to Analytics server.');
@@ -192,9 +198,11 @@ class Session {
         this.sessionId = res.data.session_uuid;
         this.sessionToken = res.data.session_token;
         this.pingInterval = setInterval(() => {
-          this.event('Ping', 'alive', '');
+          this.event('Ping', 'alive', '')
+          .catch(() => flashpoint.log.error('Ping error'));
         }, 1000 * 60 * 5);
-        this.event('Ping', 'alive', '');
+        this.event('Ping', 'alive', '')
+        .catch(() => flashpoint.log.error('Ping error'));
         flashpoint.log.debug('Created Analytics Session');
       } else {
         flashpoint.log.error('Bad Analytics Response getting Session - \n' + JSON.stringify(res.data));

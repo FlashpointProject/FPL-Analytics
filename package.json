@@ -1,8 +1,8 @@
 {
   "name": "analytics",
   "displayName": "Flashpoint Analytics",
-  "author": "Colin Berry",
-  "version": "2.0.0",
+  "author": "Colin",
+  "version": "2.0.1",
   "launcherVersion": "10.0.0",
   "description": "Opt-in collection of information on Flashpoint usage.",
   "icon": "icon.png",

@@ -5,6 +5,9 @@ const zip = require('gulp-zip');
 const webpack = require('webpack');
 const merge = require('merge-stream');
 const webpackConfig = require('./webpack.config.js')
+const packageJson = require('./package.json');
+
+const folder = (packageJson.author + '_' + packageJson.name).toLowerCase().replace(' ', '-');
 
 const filesToCopy = [
     'package.json',
@@ -31,18 +34,18 @@ function build(cb) {
 function stage() {
     const streams = filesToCopy.map(file => {
         if (fs.existsSync(file)) {
-            return gulp.src(file).pipe(gulp.dest('package/analytics'));
+            return gulp.src(file).pipe(gulp.dest(`package/${folder}`));
         }
     }).filter(s => s != undefined);
     return merge([
         ...streams,
-        gulp.src('dist/**/*').pipe(gulp.dest('package/analytics/dist')),
-        gulp.src('static/**/*').pipe(gulp.dest('package/analytics/static')),
+        gulp.src('dist/**/*').pipe(gulp.dest(`package/${folder}/dist`)),
+        gulp.src('static/**/*').pipe(gulp.dest(`package/${folder}/static`)),
     ]);
 }
 
 function package() {
-    return gulp.src('package/**/*').pipe(zip('extension.zip')).pipe(gulp.dest('.'));
+    return gulp.src('package/**/*').pipe(zip(packageJson.artifactName)).pipe(gulp.dest('.'));
 }
 
 exports.clean = clean;

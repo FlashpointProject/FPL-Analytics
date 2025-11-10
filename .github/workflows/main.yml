@@ -43,7 +43,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.package_version.outputs.version }}
-        name: ${{ github.repository }} ${{ steps.package_version.outputs.version }}
+        name: ${{ github.repository.name }} ${{ steps.package_version.outputs.version }}
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +63,12 @@ jobs:
         cache: 'npm'
         
     - run: npm install
+
+    - name: Get artifact name
+      id: artifact_info
+      run: |
+        ARTIFACT_NAME=$(node -p "require('./package.json').artifactName")
+        echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
     
     - name: Build and Package Release
       run: |
@@ -74,6 +80,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./extension.zip
-        asset_name: extension.zip
+        asset_path: ./${{ steps.artifact_info.outputs.artifact_name }}
+        asset_name: ${{ steps.artifact_info.outputs.artifact_name }}
         asset_content_type: application/zip

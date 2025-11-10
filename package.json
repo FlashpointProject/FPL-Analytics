@@ -6,6 +6,7 @@
   "launcherVersion": "10.0.0",
   "description": "Opt-in collection of information on Flashpoint usage.",
   "icon": "icon.png",
+  "artifactName": "analytics-ext.zip",
   "main": "./dist/ext.js",
   "contributes": {
     "configuration": [

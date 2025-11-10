@@ -2,7 +2,7 @@
   "name": "analytics",
   "displayName": "Flashpoint Analytics",
   "author": "Colin",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "launcherVersion": "10.0.0",
   "description": "Opt-in collection of information on Flashpoint usage.",
   "icon": "icon.png",

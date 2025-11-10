@@ -43,7 +43,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.package_version.outputs.version }}
-        name: ${{ github.repository.name }} ${{ steps.package_version.outputs.version }}
+        name: ${{ github.event.repository.name }} ${{ steps.package_version.outputs.version }}
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

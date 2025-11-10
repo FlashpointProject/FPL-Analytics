@@ -40,16 +40,13 @@ jobs:
     - name: Create release
       id: create_release
       if: steps.check_release.outputs.should_release == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.package_version.outputs.version }}
+        name: ${{ github.repository }} ${{ steps.package_version.outputs.version }}
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        UPLOAD_URL=$(gh release create "${{ steps.package_version.outputs.version }}" \
-            --repo="$GITHUB_REPOSITORY" \
-            --title="${GITHUB_REPOSITORY#*/} ${{ steps.package_version.outputs.version }}" \
-            --generate-notes \
-            --json upload_url \
-            --jq '.upload_url')
-        echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
   
   upload-release:
     runs-on: ubuntu-latest

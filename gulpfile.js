@@ -42,7 +42,7 @@ function stage() {
 }
 
 function package() {
-    return gulp.src('package/**/*').pipe(zip('extension.fplx')).pipe(gulp.dest('.'));
+    return gulp.src('package/**/*').pipe(zip('extension.zip')).pipe(gulp.dest('.'));
 }
 
 exports.clean = clean;
